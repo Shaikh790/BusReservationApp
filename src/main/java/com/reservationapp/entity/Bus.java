@@ -2,8 +2,8 @@ package com.reservationapp.entity;
 
 
 
-import jakarta.persistence.*;
-import jakarta.persistence.Id;
+import javax.persistence.*;
+import javax.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

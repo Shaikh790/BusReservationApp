@@ -1,7 +1,7 @@
 package com.reservationapp.entity;
 
-import jakarta.persistence.*;
-import jakarta.persistence.Id;
+import javax.persistence.*;
+import javax.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class SubRoute {
+public class  SubRoute {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

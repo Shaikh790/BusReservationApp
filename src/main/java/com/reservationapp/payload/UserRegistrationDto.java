@@ -1,6 +1,6 @@
 package com.reservationapp.payload;
 
-import jakarta.persistence.Lob;
+import javax.persistence.*;
 
 public class UserRegistrationDto {
 

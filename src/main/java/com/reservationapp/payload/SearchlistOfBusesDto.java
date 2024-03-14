@@ -1,6 +1,8 @@
 package com.reservationapp.payload;
 
-import jakarta.persistence.Column;
+import javax.persistence.*;
+
+
 import lombok.Data;
 
 @Data

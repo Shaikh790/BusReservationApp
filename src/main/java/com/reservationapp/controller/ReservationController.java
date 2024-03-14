@@ -7,13 +7,23 @@ import com.reservationapp.entity.SubRoute;
 import com.reservationapp.exception.ResourceNotFound;
 import com.reservationapp.payload.ReservationDto;
 import com.reservationapp.repository.BusRepository;
+import com.reservationapp.repository.PassengerRepository;
 import com.reservationapp.repository.RouteRepository;
 import com.reservationapp.repository.SubRouteRepository;
+import com.reservationapp.util.EmailService;
+import com.reservationapp.util.ExcelGeneratorService;
+import com.reservationapp.util.PdfTicketGeneratorService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
-
+@RestController
+@RequestMapping("/api/reservation")
 public class ReservationController {
 
     @Autowired
@@ -24,11 +34,21 @@ public class ReservationController {
 
     @Autowired
     private BusRepository busRepository;
+    @Autowired
+    private  PassengerRepository passengerRepository;
+     @Autowired
+     private PdfTicketGeneratorService pdfTicketGeneratorService;
+     @Autowired
+     private EmailService emailService;
+     @Autowired
+     private ExcelGeneratorService excelGeneratorService;
 
-    public ReservationDto bookTicket(
+     //http://localhost:8881/api/reservation?busId=1&routeId=2
+     @PostMapping
+    public ResponseEntity<String> bookTicket(
             @RequestParam long busId,
             @RequestParam long routeId,
-            @RequestParam String SeatNumber
+            @RequestBody Passenger passenger
     ){
 //       Bus bus = busRepository.findById(busId).orElseThrow(
 //               ()-> new ResourceNotFound("bus not found with id")
@@ -56,8 +76,46 @@ public class ReservationController {
         }
         if (busIsPresent&&routeIsPresent || busIsPresent&&subrouteIsPresent){
             //add passenger
-
+        Passenger p = new Passenger();
+        p.setFirstName(passenger.getFirstName());
+        p.setLastName(passenger.getLastName());
+        p.setEmail(passenger.getEmail());
+        p.setMobile(passenger.getMobile());
+        p.setRouteId(routeId);
+        p.setBusId(busId);
+            Passenger savedPassenger = passengerRepository.save(p);
+            byte[] pdfBytes = pdfTicketGeneratorService.generateTicket(savedPassenger, byRouteId.get().getFromLocation(),
+                    byRouteId.get().getToLocation(), byRouteId.get().getFromDate());
+            emailService.sendEmailWithAttachment(passenger.getEmail(),
+                    "booking Conform..","your reservation id"+savedPassenger.getId(),pdfBytes,"tickets");
         }
-        return  null ;
+        return new ResponseEntity<>("Done..", HttpStatus.CREATED) ;
+    }
+    @GetMapping("/passengers/excel")
+    public ResponseEntity<byte[]> generateExcel() {
+        try {
+            // Retrieve passenger data from database or any other source
+            List<Passenger> passengers = fetchPassengersDataBase();
+
+            // Generate Excel file using the service
+            byte[] excelBytes = excelGeneratorService.generateExcel(passengers);
+
+            // Prepare HTTP headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", "passenger_data.xlsx");
+
+            return new ResponseEntity<>(excelBytes,headers,HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Example method to retrieve passenger data (replace this with actual data retrieval logic)
+    private List<Passenger> fetchPassengersDataBase() {
+
+        return passengerRepository.findAll();
     }
 }
+
